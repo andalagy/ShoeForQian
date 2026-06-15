@@ -1,0 +1,3 @@
+import { useState } from "react";
+import { useExperienceStore } from "../../store/experienceStore";
+export function InformationSheet(){ const [open,setOpen]=useState(false); const {soundEnabled,toggleSound}=useExperienceStore(); return <><button className="infoMark" onClick={()=>setOpen(true)} aria-label="Open object information">···</button>{open&&<div className="sheetScrim" onClick={()=>setOpen(false)}><aside className="infoSheet" onClick={(e)=>e.stopPropagation()}><a>Materials</a><a>Delivery</a><a>Care</a><a>Contact</a><button onClick={toggleSound}>Sound {soundEnabled?"off":"on"}</button></aside></div>}</>}
