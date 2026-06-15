@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>THE FIRST FORM — ShoeForQian</title>
+  <meta name="description" content="A dark cinematic product experience for one luxury leather boot." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main id="experience" class="experience stage-discovery" tabindex="0" aria-live="polite">
+    <div class="grain" aria-hidden="true"></div>
+    <div class="vignette" aria-hidden="true"></div>
+
+    <section class="opening" aria-label="Opening scene">
+      <p class="kicker">AN OBJECT FOR THE GROUND</p>
+      <p class="instruction">Move to reveal</p>
+    </section>
+
+    <section class="object-field" aria-label="Leather boot object">
+      <div class="boot-wrap" id="bootWrap">
+        <svg class="boot-svg" viewBox="0 0 900 620" role="img" aria-label="Luxury leather boot silhouette">
+          <defs>
+            <linearGradient id="leather" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0" stop-color="#1b100c" />
+              <stop offset=".42" stop-color="#5A3826" />
+              <stop offset=".7" stop-color="#2C1C14" />
+              <stop offset="1" stop-color="#0d0907" />
+            </linearGradient>
+            <linearGradient id="edge" x1="0" x2="1">
+              <stop offset="0" stop-color="#080808" />
+              <stop offset=".5" stop-color="#3a271d" />
+              <stop offset="1" stop-color="#080808" />
+            </linearGradient>
+            <filter id="softShadow" x="-20%" y="-20%" width="140%" height="150%">
+              <feDropShadow dx="0" dy="34" stdDeviation="22" flood-color="#000" flood-opacity=".72" />
+            </filter>
+          </defs>
+          <g class="boot-art" filter="url(#softShadow)">
+            <path class="shaft" d="M254 76 C314 45 455 55 500 87 C486 205 490 300 541 384 L259 395 C241 292 229 172 254 76Z" fill="url(#leather)" />
+            <path class="ankle" d="M226 336 C309 284 451 292 557 356 C631 398 734 392 811 437 C845 458 849 494 811 511 L222 511 C178 480 174 381 226 336Z" fill="url(#leather)" />
+            <path class="toe" d="M570 380 C675 384 791 413 831 451 C855 474 845 503 805 512 L587 511 C551 488 543 424 570 380Z" fill="#2C1C14" opacity=".94" />
+            <path class="heel" d="M171 435 L266 435 L252 566 L183 566 C177 518 165 472 171 435Z" fill="#120d0a" />
+            <path class="sole" d="M158 505 C292 526 650 526 838 504 C860 520 853 548 826 560 C637 584 332 581 148 558 C126 543 130 518 158 505Z" fill="url(#edge)" />
+            <path class="welt" d="M201 489 C364 507 644 507 810 489" fill="none" stroke="#8F8A80" stroke-width="5" stroke-linecap="round" opacity=".42" />
+            <path class="stitch-line" d="M284 352 C386 321 493 333 581 390" fill="none" stroke="#D8D1C5" stroke-width="4" stroke-dasharray="10 16" opacity=".48" />
+            <path class="crease" d="M316 161 C359 194 420 197 468 173 M300 232 C367 260 439 256 496 225 M611 430 C678 442 740 454 792 486" fill="none" stroke="#F1EEE8" stroke-width="3" opacity=".11" />
+            <path class="specular" d="M319 92 C394 88 449 107 463 133 C429 150 341 146 296 125 C297 110 305 99 319 92Z" fill="#F1EEE8" opacity=".08" />
+          </g>
+        </svg>
+        <div class="boot-glow" aria-hidden="true"></div>
+      </div>
+    </section>
+
+    <section class="examination" aria-label="Examination details">
+      <div class="precision-marks">
+        <button class="mark active" data-detail="leather" style="--x:42%;--y:31%"><span>Leather</span></button>
+        <button class="mark" data-detail="stitching" style="--x:54%;--y:55%"><span>Stitching</span></button>
+        <button class="mark" data-detail="structure" style="--x:33%;--y:48%"><span>Structure</span></button>
+        <button class="mark" data-detail="sole" style="--x:61%;--y:76%"><span>Sole</span></button>
+      </div>
+      <div class="detail-copy" id="detailCopy">
+        <p class="label">Leather</p>
+        <p class="statement">Full-grain hide burnished until the surface holds light like oil on stone.</p>
+      </div>
+    </section>
+
+    <section class="claim" aria-label="Claim this pair">
+      <div class="claim-copy">
+        <h1>THE FIRST FORM</h1>
+        <p class="price">$680</p>
+        <p class="edition">One form. One material. Produced in limited quantities.</p>
+      </div>
+      <div class="plinth" aria-label="Select size">
+        <div class="plinth-line"></div>
+        <div class="sizes" id="sizes"></div>
+        <p id="sizeStatus" class="size-status">SELECT A FORM</p>
+      </div>
+      <button id="claimButton" class="claim-button" disabled>CLAIM THIS PAIR</button>
+    </section>
+
+    <section class="collection" aria-label="Collection confirmation">
+      <div class="box-outline" aria-hidden="true"></div>
+      <p>ADDED TO YOUR COLLECTION</p>
+      <div class="collection-actions">
+        <button type="button">CHECKOUT</button>
+        <button type="button" id="returnButton">RETURN TO THE OBJECT</button>
+      </div>
+    </section>
+
+    <nav class="dial" aria-label="Examination dial">
+      <button data-stage="discovery" class="stage-dot active">Discovery</button>
+      <button data-stage="examination" class="stage-dot">Examination</button>
+      <button data-stage="claim" class="stage-dot">Claim</button>
+      <div class="dial-ring"><span id="dialLabel">Discovery</span></div>
+    </nav>
+  </main>
+  <script src="script.js" defer></script>
+</body>
+</html>
