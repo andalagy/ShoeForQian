@@ -20,13 +20,10 @@
   </main>
   <script>
     const item = JSON.parse(localStorage.getItem('qianshoes:lastSelection') || 'null');
-    const productEl = document.getElementById('checkoutProduct');
-    const sizeEl = document.getElementById('checkoutSize');
-    const priceEl = document.getElementById('checkoutPrice');
     if (item) {
-      productEl.textContent = item.name;
-      sizeEl.textContent = item.size;
-      priceEl.textContent = `$${item.price}`;
+      checkoutProduct.textContent = item.name;
+      checkoutSize.textContent = item.size;
+      checkoutPrice.textContent = `$${item.price}`;
     }
   </script>
 </body>
