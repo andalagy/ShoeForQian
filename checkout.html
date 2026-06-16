@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CHECKOUT — QIANSHOES</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="checkout-page">
+  <main class="checkout-shell">
+    <p class="checkout-brand">QIANSHOES</p>
+    <h1>CHECKOUT</h1>
+    <dl class="checkout-summary">
+      <dt>PRODUCT</dt><dd id="checkoutProduct">No pair selected</dd>
+      <dt>SIZE</dt><dd id="checkoutSize">—</dd>
+      <dt>PRICE</dt><dd id="checkoutPrice">—</dd>
+    </dl>
+    <p class="prototype">This is a prototype checkout.</p>
+    <a class="checkout-return" href="index.html">RETURN TO THE LINE</a>
+  </main>
+  <script>
+    const item = JSON.parse(localStorage.getItem('qianshoes:lastSelection') || 'null');
+    if (item) {
+      checkoutProduct.textContent = item.name;
+      checkoutSize.textContent = item.size;
+      checkoutPrice.textContent = `$${item.price}`;
+    }
+  </script>
+</body>
+</html>
