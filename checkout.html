@@ -11,7 +11,7 @@
     <p class="checkout-brand">QIANSHOES</p>
     <h1>CHECKOUT</h1>
     <dl class="checkout-summary">
-      <dt>PRODUCT</dt><dd id="checkoutProduct">No pair selected</dd>
+      <dt>PRODUCT</dt><dd id="checkoutProduct">NO OBJECT SELECTED</dd>
       <dt>SIZE</dt><dd id="checkoutSize">—</dd>
       <dt>PRICE</dt><dd id="checkoutPrice">—</dd>
     </dl>
@@ -24,6 +24,10 @@
       checkoutProduct.textContent = item.name;
       checkoutSize.textContent = item.size;
       checkoutPrice.textContent = `$${item.price}`;
+    } else {
+      checkoutProduct.textContent = 'NO OBJECT SELECTED';
+      checkoutSize.textContent = '—';
+      checkoutPrice.textContent = '—';
     }
   </script>
 </body>
