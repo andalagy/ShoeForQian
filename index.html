@@ -15,7 +15,7 @@
     <section class="intro" aria-label="Intro">
       <div class="intro-copy">
         <h1>QIANSHOES</h1>
-        <p>DRAG THE LINE</p>
+        <p>SCROLL THE LINE</p>
       </div>
       <div class="intro-line" aria-hidden="true"></div>
     </section>
@@ -27,10 +27,12 @@
       </div>
       <div class="line-stage" id="lineStage">
         <div class="light-beam" aria-hidden="true"></div>
-        <div class="plinth-line" id="archiveLine" aria-label="Drag the line to move through shoes"></div>
+        <div class="plinth-line" id="archiveLine" aria-hidden="true"></div>
+        <button class="side-hit side-hit-left" type="button" data-direction="-1" aria-label="Previous shoe">PREVIOUS</button>
+        <button class="side-hit side-hit-right" type="button" data-direction="1" aria-label="Next shoe">NEXT</button>
         <div class="shoe-track" id="shoeTrack"></div>
       </div>
-      <p class="line-instruction">DRAG TO MOVE · CLICK TO EXAMINE</p>
+      <p class="line-instruction">SCROLL OR TAP TO MOVE · SELECT CENTER TO EXAMINE</p>
     </section>
 
     <section class="inspect-view" aria-label="Shoe inspection">
@@ -42,7 +44,7 @@
         <p class="type" id="inspectType">Leather Boot</p>
         <p class="description" id="inspectDescription">Built as a single statement.</p>
       </aside>
-      <div class="inspect-object" id="inspectObject" aria-label="Drag shoe gently to inspect" role="img"></div>
+      <div class="inspect-object" id="inspectObject" aria-label="Selected shoe" role="img"></div>
       <div class="detail-marks" aria-label="Shoe details">
         <button type="button" class="detail-mark active" data-detail="MATERIAL">MATERIAL</button>
         <button type="button" class="detail-mark" data-detail="FORM">FORM</button>
