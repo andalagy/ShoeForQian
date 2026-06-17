@@ -81,13 +81,10 @@ const products = [
   }
 ];
 
-const state = { currentIndex: 0, mode: 'intro', selectedProductId: null, selectedSize: null, cart: [] };
-const $ = (s) => document.querySelector(s);
-const app = $('#app');
-const track = $('#shoeTrack');
-let drag = { active: false, startX: 0, startOffset: 0, offset: 0, lastX: 0, lastT: 0, velocity: 0, inspect: false, moved: false };
-let wheelLocked = false;
-let snapTimer;
+const STORAGE_KEY = 'qianshoes:lastSelection';
+const state = { currentIndex: 0, mode: 'line', selectedSize: null, cart: [] };
+const qs = (selector, root = document) => root.querySelector(selector);
+const qsa = (selector, root = document) => [...root.querySelectorAll(selector)];
 
 function createShoeSVG(product) {
   const palettes = {
@@ -152,87 +149,192 @@ function createShoeSVG(product) {
   </svg>`;
 }
 
-const shoeSvg = createShoeSVG;
 
-function renderShoes() {
-  track.innerHTML = products.map((p, i) => `<button class="shoe-item" type="button" data-index="${i}" aria-label="Select or examine ${p.name}">${shoeSvg(p)}</button>`).join('');
-  track.addEventListener('click', event => {
-    if (drag.moved) { drag.moved = false; event.preventDefault(); return; }
-    const shoe = event.target.closest('.shoe-item');
-    if (!shoe || !track.contains(shoe)) return;
-    handleShoeClick(Number(shoe.dataset.index));
-  });
-  renderLine();
+
+function productAt(index) {
+  return products[Number.isInteger(index) && products[index] ? index : 0] || products[0];
 }
 
-function setMode(mode) { state.mode = mode; app.className = `experience mode-${mode}`; }
-function circularDistance(index) {
-  const total = products.length;
-  const direct = Math.abs(index - state.currentIndex);
-  return Math.min(direct, total - direct);
-}
-function renderLine() {
-  drag.offset = -state.currentIndex * 32;
-  track.style.setProperty('--offset', `${drag.offset}vw`);
-  [...track.children].forEach((el, i) => {
-    const d = circularDistance(i);
-    el.classList.toggle('active', i === state.currentIndex);
-    el.style.setProperty('--distance', d);
-    el.setAttribute('aria-current', i === state.currentIndex ? 'true' : 'false');
-    el.setAttribute('aria-label', `${i === state.currentIndex ? 'Examine' : 'Select'} ${products[i].name}`);
-  });
-  const p = products[state.currentIndex];
-  activeName.textContent = p.name; activeCount.textContent = `${p.number} / ${String(products.length).padStart(2, '0')}`;
-}
-function goToIndex(nextIndex) {
-  const total = products.length;
-  state.currentIndex = ((nextIndex % total) + total) % total;
-  if (state.mode !== 'inspect') state.selectedSize = null;
-  renderLine();
-}
-function move(delta) { goToIndex(state.currentIndex + delta); }
-function snapFromOffset() { goToIndex(Math.round(-drag.offset / 32)); }
-function handleShoeClick(index) {
-  if (state.mode !== 'line') return;
-
-  if (index !== state.currentIndex) {
-    goToIndex(index);
-  } else {
-    openInspection(index);
+function safeStorage(action, value) {
+  try {
+    if (action === 'get') return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+    if (action === 'set') localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
+  } catch (error) {
+    return null;
   }
-}
-function openInspection(index = state.currentIndex) { state.currentIndex = index; state.selectedProductId = products[state.currentIndex].id; state.selectedSize = null; renderLine(); renderInspect(); setMode('inspect'); }
-function renderInspect() {
-  const p = products[state.currentIndex];
-  inspectNumber.textContent = p.number; inspectName.textContent = p.name; inspectType.textContent = p.type; inspectDescription.textContent = p.description;
-  inspectMaterial.textContent = p.material; inspectColor.textContent = p.color; inspectPrice.textContent = `$${p.price}`; inspectObject.innerHTML = shoeSvg(p);
-  detailText.textContent = p.detailMaterial; document.querySelectorAll('.detail-mark').forEach(m => m.classList.toggle('active', m.dataset.detail === 'MATERIAL'));
-  sizeLine.innerHTML = p.sizes.map(size => `<button class="size-mark" type="button" ${p.unavailableSizes.includes(size) ? 'disabled' : ''} aria-label="${p.unavailableSizes.includes(size) ? `Size ${size} unavailable` : `Select size ${size}`}">${size}</button>`).join('');
-  sizeStatus.textContent = 'NO SIZE SELECTED'; claimAction.disabled = true; claimAction.classList.remove('ready');
-  sizeLine.querySelectorAll('.size-mark:not(:disabled)').forEach(btn => btn.addEventListener('click', () => { state.selectedSize = btn.textContent; sizeLine.querySelectorAll('.size-mark').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); sizeStatus.textContent = `FORM ${state.selectedSize} SELECTED`; claimAction.disabled = false; claimAction.classList.add('ready'); }));
-}
-function confirmClaim() {
-  const p = products[state.currentIndex]; const item = { id: p.id, name: p.name, size: state.selectedSize, price: p.price };
-  state.cart.push(item); localStorage.setItem('qianshoes:lastSelection', JSON.stringify(item)); setMode('confirmation');
+  return null;
 }
 
-renderShoes(); setTimeout(() => setMode('line'), 1500);
-track.addEventListener('pointerdown', startLine);
-function startLine(e) { if (state.mode !== 'line') return; drag.active = true; drag.moved = false; drag.startX = drag.lastX = e.clientX; drag.startOffset = drag.offset; drag.lastT = performance.now(); track.setPointerCapture?.(e.pointerId); }
-addEventListener('pointermove', e => { if (drag.active) { const now = performance.now(); const dx = e.clientX - drag.startX; if (Math.abs(dx) > 8) drag.moved = true; drag.offset = drag.startOffset + (dx / innerWidth) * 120; track.style.setProperty('--offset', `${drag.offset}vw`); drag.velocity = (e.clientX - drag.lastX) / Math.max(1, now - drag.lastT); drag.lastX = e.clientX; drag.lastT = now; } if (drag.inspect) { const r = Math.max(-12, Math.min(12, (e.clientX - drag.startX) / 14)); inspectObject.style.setProperty('--rotate', `${r}deg`); } });
-addEventListener('pointerup', () => { if (drag.active) { const dx = drag.lastX - drag.startX; drag.active = false; if (Math.abs(dx) > 24) move(dx < 0 ? 1 : -1); else renderLine(); } drag.inspect = false; });
-function handleWheel(e) {
-  if (state.mode !== 'line') return;
-  e.preventDefault();
-  if (wheelLocked) return;
-  const direction = e.deltaY > 0 || e.deltaX > 0 ? 1 : -1;
-  move(direction);
-  wheelLocked = true;
-  setTimeout(() => { wheelLocked = false; }, 600);
+function initCheckout() {
+  const productEl = qs('#checkoutProduct');
+  if (!productEl) return;
+  const item = safeStorage('get');
+  qs('#checkoutSize').textContent = item?.size || '—';
+  qs('#checkoutPrice').textContent = item?.price ? `$${item.price}` : '—';
+  productEl.textContent = item?.name || 'NO OBJECT SELECTED';
+  qs('#checkoutNote').textContent = item ? 'This prototype checkout received your selected object.' : 'No selected pair is waiting.';
 }
-addEventListener('wheel', handleWheel, { passive: false });
-inspectObject.addEventListener('pointerdown', e => { if (state.mode === 'inspect') { drag.inspect = true; drag.startX = e.clientX; inspectObject.setPointerCapture?.(e.pointerId); } });
-document.querySelectorAll('.detail-mark').forEach(btn => btn.addEventListener('click', () => { document.querySelectorAll('.detail-mark').forEach(b => b.classList.remove('active')); btn.classList.add('active'); detailText.textContent = { MATERIAL: products[state.currentIndex].detailMaterial, FORM: products[state.currentIndex].detailForm, SOLE: products[state.currentIndex].detailSole }[btn.dataset.detail]; }));
-returnToLine.addEventListener('click', () => setMode('line')); confirmReturn.addEventListener('click', () => setMode('line')); claimAction.addEventListener('click', () => !claimAction.disabled && confirmClaim());
-document.querySelectorAll('.side-hit').forEach(zone => zone.addEventListener('click', () => move(Number(zone.dataset.direction))));
-addEventListener('keydown', e => { if (state.mode === 'line') { if (e.key === 'ArrowRight') move(1); if (e.key === 'ArrowLeft') move(-1); if (e.key === 'Enter') openInspection(); } else if (e.key === 'Escape') setMode('line'); });
+
+function initLineExperience() {
+  const app = qs('#app');
+  const track = qs('#shoeTrack');
+  if (!app || !track) return;
+  let wheelLocked = false;
+  let touchStartX = 0;
+  let touchStartY = 0;
+
+  function setMode(mode) {
+    state.mode = mode;
+    app.className = `experience mode-${mode}`;
+  }
+
+  function circularDelta(index) {
+    const total = products.length;
+    const raw = index - state.currentIndex;
+    if (raw > total / 2) return raw - total;
+    if (raw < -total / 2) return raw + total;
+    return raw;
+  }
+
+  function renderLine() {
+    const itemWidth = Math.min(Math.max(window.innerWidth * 0.32, 260), 410) + window.innerWidth * 0.07;
+    track.style.setProperty('--offset', `${-state.currentIndex * itemWidth}px`);
+    qsa('.shoe-item', track).forEach((el, index) => {
+      const distance = Math.abs(circularDelta(index));
+      el.classList.toggle('active', index === state.currentIndex);
+      el.style.setProperty('--distance', String(Math.min(distance, 2)));
+      el.setAttribute('aria-current', index === state.currentIndex ? 'true' : 'false');
+      el.setAttribute('aria-label', `${index === state.currentIndex ? 'Inspect' : 'Center'} ${products[index].name}`);
+    });
+    const product = productAt(state.currentIndex);
+    qs('#activeName').textContent = product.name;
+    qs('#activeCount').textContent = `${product.number} / ${String(products.length).padStart(2, '0')}`;
+  }
+
+  function goToIndex(nextIndex) {
+    const total = products.length;
+    state.currentIndex = ((nextIndex % total) + total) % total;
+    state.selectedSize = null;
+    renderLine();
+  }
+
+  function move(delta) {
+    goToIndex(state.currentIndex + delta);
+  }
+
+  function renderSizes(product) {
+    const sizeLine = qs('#sizeLine');
+    sizeLine.innerHTML = product.sizes.map((size) => {
+      const unavailable = product.unavailableSizes.includes(size);
+      return `<button class="size-mark" type="button" data-size="${size}" ${unavailable ? 'disabled' : ''} aria-label="${unavailable ? `Size ${size} unavailable` : `Select size ${size}`}">${size}</button>`;
+    }).join('');
+    qs('#sizeStatus').textContent = 'NO SIZE SELECTED';
+    qs('#claimAction').disabled = true;
+    qs('#claimAction').classList.remove('ready');
+  }
+
+  function updateDetail(detail = 'material') {
+    const product = productAt(state.currentIndex);
+    const detailMap = { material: product.detailMaterial, form: product.detailForm, sole: product.detailSole };
+    qs('#detailText').textContent = detailMap[detail] || detailMap.material;
+    qsa('.detail-mark').forEach((button) => button.classList.toggle('active', button.dataset.detail === detail));
+  }
+
+  function renderInspect() {
+    const product = productAt(state.currentIndex);
+    qs('#inspectNumber').textContent = product.number;
+    qs('#inspectName').textContent = product.name;
+    qs('#inspectType').textContent = product.type;
+    qs('#inspectDescription').textContent = product.description;
+    qs('#inspectMaterial').textContent = product.material;
+    qs('#inspectColor').textContent = product.color;
+    qs('#inspectPrice').textContent = `$${product.price}`;
+    qs('#inspectObject').innerHTML = createShoeSVG(product);
+    updateDetail('material');
+    renderSizes(product);
+  }
+
+  function openInspection(index = state.currentIndex) {
+    if (!products[index]) index = 0;
+    state.currentIndex = index;
+    state.selectedSize = null;
+    renderLine();
+    renderInspect();
+    setMode('inspect');
+  }
+
+  function claimPair() {
+    const product = productAt(state.currentIndex);
+    if (!state.selectedSize || product.unavailableSizes.includes(Number(state.selectedSize))) return;
+    const item = { id: product.id, name: product.name, size: state.selectedSize, price: product.price };
+    state.cart = [item];
+    safeStorage('set', item);
+    setMode('confirmation');
+  }
+
+  track.innerHTML = products.map((product, index) => `<button class="shoe-item" type="button" data-index="${index}">${createShoeSVG(product)}</button>`).join('');
+  renderLine();
+
+  track.addEventListener('click', (event) => {
+    const shoe = event.target.closest('.shoe-item');
+    if (!shoe || !track.contains(shoe) || state.mode !== 'line') return;
+    const index = Number(shoe.dataset.index);
+    if (index === state.currentIndex) openInspection(index);
+    else goToIndex(index);
+  });
+
+  qsa('.side-hit').forEach((button) => button.addEventListener('click', () => move(Number(button.dataset.direction))));
+  qs('#returnToLine').addEventListener('click', () => setMode('line'));
+  qs('#confirmReturn').addEventListener('click', () => setMode('line'));
+  qs('#claimAction').addEventListener('click', claimPair);
+
+  qs('#sizeLine').addEventListener('click', (event) => {
+    const button = event.target.closest('.size-mark');
+    if (!button || button.disabled) return;
+    state.selectedSize = button.dataset.size;
+    qsa('.size-mark').forEach((el) => el.classList.remove('selected'));
+    button.classList.add('selected');
+    qs('#sizeStatus').textContent = `SIZE ${state.selectedSize} SELECTED`;
+    qs('#claimAction').disabled = false;
+    qs('#claimAction').classList.add('ready');
+  });
+
+  qsa('.detail-mark').forEach((button) => button.addEventListener('click', () => updateDetail(button.dataset.detail))); 
+
+  window.addEventListener('wheel', (event) => {
+    if (state.mode !== 'line') return;
+    event.preventDefault();
+    if (wheelLocked) return;
+    const primaryDelta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+    move(primaryDelta > 0 ? 1 : -1);
+    wheelLocked = true;
+    window.setTimeout(() => { wheelLocked = false; }, 520);
+  }, { passive: false });
+
+  window.addEventListener('keydown', (event) => {
+    if (state.mode === 'line') {
+      if (event.key === 'ArrowRight') move(1);
+      if (event.key === 'ArrowLeft') move(-1);
+      if (event.key === 'Enter') openInspection();
+    } else if (event.key === 'Escape') {
+      setMode('line');
+    }
+  });
+
+  window.addEventListener('resize', renderLine);
+  track.addEventListener('touchstart', (event) => {
+    touchStartX = event.changedTouches[0].clientX;
+    touchStartY = event.changedTouches[0].clientY;
+  }, { passive: true });
+  track.addEventListener('touchend', (event) => {
+    const touch = event.changedTouches[0];
+    const dx = touch.clientX - touchStartX;
+    const dy = touch.clientY - touchStartY;
+    if (Math.abs(dx) > 36 && Math.abs(dx) > Math.abs(dy)) move(dx < 0 ? 1 : -1);
+  }, { passive: true });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initLineExperience();
+  initCheckout();
+});
