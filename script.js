@@ -81,8 +81,8 @@ const products = [
   }
 ];
 
-const STORAGE_KEY = 'qianshoes:lastSelection';
-const state = { currentIndex: 0, mode: 'line', selectedSize: null, cart: [] };
+const STORAGE_KEY = 'qianshoes-cart';
+const state = { currentIndex: 0, mode: 'line', selectedSize: null, selectedProductId: products[0]?.id || null, activeDetail: 'material', cart: [] };
 const qs = (selector, root = document) => root.querySelector(selector);
 const qsa = (selector, root = document) => [...root.querySelectorAll(selector)];
 
@@ -155,6 +155,10 @@ function productAt(index) {
   return products[Number.isInteger(index) && products[index] ? index : 0] || products[0];
 }
 
+function getCurrentProduct() {
+  return products.find((product) => product.id === state.selectedProductId) || productAt(state.currentIndex);
+}
+
 function safeStorage(action, value) {
   try {
     if (action === 'get') return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
@@ -182,10 +186,18 @@ function initLineExperience() {
   let wheelLocked = false;
   let touchStartX = 0;
   let touchStartY = 0;
+  const TAP_THRESHOLD = 8;
 
   function setMode(mode) {
     state.mode = mode;
     app.className = `experience mode-${mode}`;
+  }
+
+  function returnToLine() {
+    state.mode = 'line';
+    state.selectedSize = null;
+    app.className = 'experience mode-line';
+    renderLine();
   }
 
   function circularDelta(index) {
@@ -215,6 +227,7 @@ function initLineExperience() {
     const total = products.length;
     state.currentIndex = ((nextIndex % total) + total) % total;
     state.selectedSize = null;
+    state.selectedProductId = productAt(state.currentIndex).id;
     renderLine();
   }
 
@@ -222,26 +235,32 @@ function initLineExperience() {
     goToIndex(state.currentIndex + delta);
   }
 
-  function renderSizes(product) {
+  function renderSizeSelection(product) {
     const sizeLine = qs('#sizeLine');
     sizeLine.innerHTML = product.sizes.map((size) => {
       const unavailable = product.unavailableSizes.includes(size);
-      return `<button class="size-mark" type="button" data-size="${size}" ${unavailable ? 'disabled' : ''} aria-label="${unavailable ? `Size ${size} unavailable` : `Select size ${size}`}">${size}</button>`;
+      const selected = String(state.selectedSize) === String(size);
+      return `<button class="size-mark ${unavailable ? 'unavailable' : ''} ${selected ? 'selected' : ''}" type="button" data-size="${size}" ${unavailable ? 'disabled' : ''} aria-label="${unavailable ? `Size ${size} unavailable` : `Select size ${size}`}">${size}</button>`;
     }).join('');
-    qs('#sizeStatus').textContent = 'NO SIZE SELECTED';
-    qs('#claimAction').disabled = true;
-    qs('#claimAction').classList.remove('ready');
+    qs('#sizeStatus').textContent = state.selectedSize ? `FORM ${state.selectedSize} SELECTED` : 'NO SIZE SELECTED';
+    qs('#claimAction').disabled = !state.selectedSize;
+    qs('#claimAction').classList.toggle('ready', Boolean(state.selectedSize));
   }
 
-  function updateDetail(detail = 'material') {
-    const product = productAt(state.currentIndex);
-    const detailMap = { material: product.detailMaterial, form: product.detailForm, sole: product.detailSole };
-    qs('#detailText').textContent = detailMap[detail] || detailMap.material;
+  function handleDetailClick(detail) {
+    const product = getCurrentProduct();
+    if (!product) return;
+    state.activeDetail = detail;
+    const detailText = {
+      material: product.detailMaterial,
+      form: product.detailForm,
+      sole: product.detailSole
+    }[detail] || product.detailMaterial;
+    qs('#detailText').textContent = detailText;
     qsa('.detail-mark').forEach((button) => button.classList.toggle('active', button.dataset.detail === detail));
   }
 
-  function renderInspect() {
-    const product = productAt(state.currentIndex);
+  function renderInspection(product) {
     qs('#inspectNumber').textContent = product.number;
     qs('#inspectName').textContent = product.name;
     qs('#inspectType').textContent = product.type;
@@ -250,56 +269,101 @@ function initLineExperience() {
     qs('#inspectColor').textContent = product.color;
     qs('#inspectPrice').textContent = `$${product.price}`;
     qs('#inspectObject').innerHTML = createShoeSVG(product);
-    updateDetail('material');
-    renderSizes(product);
+    handleDetailClick(state.activeDetail);
+    renderSizeSelection(product);
   }
 
   function openInspection(index = state.currentIndex) {
-    if (!products[index]) index = 0;
+    const product = products[index];
+
+    if (!product) {
+      state.currentIndex = 0;
+      return openInspection(0);
+    }
+
     state.currentIndex = index;
+    state.mode = 'inspect';
+    state.selectedProductId = product.id;
     state.selectedSize = null;
-    renderLine();
-    renderInspect();
-    setMode('inspect');
+    state.activeDetail = 'material';
+    app.className = 'experience mode-inspect';
+
+    renderInspection(product);
   }
 
-  function claimPair() {
-    const product = productAt(state.currentIndex);
-    if (!state.selectedSize || product.unavailableSizes.includes(Number(state.selectedSize))) return;
-    const item = { id: product.id, name: product.name, size: state.selectedSize, price: product.price };
-    state.cart = [item];
-    safeStorage('set', item);
-    setMode('confirmation');
+  function selectSize(size) {
+    const product = getCurrentProduct();
+    if (!product) return;
+
+    if (product.unavailableSizes.includes(Number(size))) return;
+
+    state.selectedSize = String(size);
+    renderSizeSelection(product);
   }
 
-  track.innerHTML = products.map((product, index) => `<button class="shoe-item" type="button" data-index="${index}">${createShoeSVG(product)}</button>`).join('');
+  function renderConfirmation(cartItem) {
+    qs('.confirmation h2').textContent = 'ADDED TO YOUR COLLECTION';
+    qs('#checkoutLink').setAttribute('aria-label', `Checkout with ${cartItem.name} size ${cartItem.size}`);
+  }
+
+  function claimCurrentPair() {
+    const product = getCurrentProduct();
+    if (!product || !state.selectedSize) return;
+
+    const cartItem = {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      size: state.selectedSize
+    };
+
+    state.cart = [cartItem];
+
+    try {
+      localStorage.setItem('qianshoes-cart', JSON.stringify(cartItem));
+    } catch (error) {
+      console.warn('Could not save cart item', error);
+    }
+
+    state.mode = 'confirmation';
+    app.className = 'experience mode-confirmation';
+    renderConfirmation(cartItem);
+  }
+
+  function handleShoeClick(index) {
+    if (state.mode !== 'line') return;
+
+    if (index !== state.currentIndex) {
+      goToIndex(index);
+      return;
+    }
+
+    openInspection(index);
+  }
+
+  track.innerHTML = products.map((product, index) => `<button class="shoe-item" data-index="${index}" type="button" aria-label="View ${product.name}"><span class="shoe-visual">${createShoeSVG(product)}</span></button>`).join('');
   renderLine();
 
   track.addEventListener('click', (event) => {
     const shoe = event.target.closest('.shoe-item');
-    if (!shoe || !track.contains(shoe) || state.mode !== 'line') return;
+    if (!shoe || !track.contains(shoe)) return;
     const index = Number(shoe.dataset.index);
-    if (index === state.currentIndex) openInspection(index);
-    else goToIndex(index);
+    if (Number.isNaN(index)) return;
+    handleShoeClick(index);
   });
 
   qsa('.side-hit').forEach((button) => button.addEventListener('click', () => move(Number(button.dataset.direction))));
-  qs('#returnToLine').addEventListener('click', () => setMode('line'));
-  qs('#confirmReturn').addEventListener('click', () => setMode('line'));
-  qs('#claimAction').addEventListener('click', claimPair);
+  qs('#returnToLine').addEventListener('click', returnToLine);
+  qs('#confirmReturn').addEventListener('click', returnToLine);
+  qs('#claimAction').addEventListener('click', claimCurrentPair);
 
   qs('#sizeLine').addEventListener('click', (event) => {
     const button = event.target.closest('.size-mark');
     if (!button || button.disabled) return;
-    state.selectedSize = button.dataset.size;
-    qsa('.size-mark').forEach((el) => el.classList.remove('selected'));
-    button.classList.add('selected');
-    qs('#sizeStatus').textContent = `SIZE ${state.selectedSize} SELECTED`;
-    qs('#claimAction').disabled = false;
-    qs('#claimAction').classList.add('ready');
+    selectSize(button.dataset.size);
   });
 
-  qsa('.detail-mark').forEach((button) => button.addEventListener('click', () => updateDetail(button.dataset.detail))); 
+  qsa('.detail-mark').forEach((button) => button.addEventListener('click', () => handleDetailClick(button.dataset.detail))); 
 
   window.addEventListener('wheel', (event) => {
     if (state.mode !== 'line') return;
@@ -315,9 +379,9 @@ function initLineExperience() {
     if (state.mode === 'line') {
       if (event.key === 'ArrowRight') move(1);
       if (event.key === 'ArrowLeft') move(-1);
-      if (event.key === 'Enter') openInspection();
+      if (event.key === 'Enter' && !event.target.closest('button, a')) openInspection();
     } else if (event.key === 'Escape') {
-      setMode('line');
+      returnToLine();
     }
   });
 
@@ -330,7 +394,7 @@ function initLineExperience() {
     const touch = event.changedTouches[0];
     const dx = touch.clientX - touchStartX;
     const dy = touch.clientY - touchStartY;
-    if (Math.abs(dx) > 36 && Math.abs(dx) > Math.abs(dy)) move(dx < 0 ? 1 : -1);
+    if (Math.abs(dx) > TAP_THRESHOLD && Math.abs(dx) > Math.abs(dy)) move(dx < 0 ? 1 : -1);
   }, { passive: true });
 }
 
