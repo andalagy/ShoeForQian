@@ -10,25 +10,14 @@
   <main class="checkout-shell">
     <p class="checkout-brand">QIANSHOES</p>
     <h1>CHECKOUT</h1>
-    <dl class="checkout-summary">
+    <dl class="checkout-summary" id="checkoutSummary">
       <dt>PRODUCT</dt><dd id="checkoutProduct">NO OBJECT SELECTED</dd>
       <dt>SIZE</dt><dd id="checkoutSize">—</dd>
       <dt>PRICE</dt><dd id="checkoutPrice">—</dd>
     </dl>
-    <p class="prototype">This is a prototype checkout.</p>
+    <p class="prototype" id="checkoutNote">No selected pair is waiting.</p>
     <a class="checkout-return" href="index.html">RETURN TO THE LINE</a>
   </main>
-  <script>
-    const item = JSON.parse(localStorage.getItem('qianshoes:lastSelection') || 'null');
-    if (item) {
-      checkoutProduct.textContent = item.name;
-      checkoutSize.textContent = item.size;
-      checkoutPrice.textContent = `$${item.price}`;
-    } else {
-      checkoutProduct.textContent = 'NO OBJECT SELECTED';
-      checkoutSize.textContent = '—';
-      checkoutPrice.textContent = '—';
-    }
-  </script>
+  <script src="script.js" defer></script>
 </body>
 </html>

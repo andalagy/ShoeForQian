@@ -4,35 +4,28 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>THE LINE — QIANSHOES</title>
-  <meta name="description" content="THE LINE, an interactive luxury shoe archive by QIANSHOES." />
+  <meta name="description" content="THE LINE, a full-screen luxury shoe archive by QIANSHOES." />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <main id="app" class="experience mode-intro" aria-live="polite" tabindex="-1">
+  <main id="app" class="experience mode-line" tabindex="-1">
     <div class="grain" aria-hidden="true"></div>
     <div class="vignette" aria-hidden="true"></div>
 
-    <section class="intro" aria-label="Intro">
-      <div class="intro-copy">
-        <h1>QIANSHOES</h1>
-        <p>SCROLL THE LINE</p>
-      </div>
-      <div class="intro-line" aria-hidden="true"></div>
-    </section>
-
     <section class="line-view" aria-label="THE LINE shoe archive">
       <div class="archive-title" aria-hidden="true">
-        <h2 id="activeName">THE FIRST FORM</h2>
+        <h1>THE LINE</h1>
         <p id="activeCount">01 / 05</p>
       </div>
       <div class="line-stage" id="lineStage">
         <div class="light-beam" aria-hidden="true"></div>
-        <div class="plinth-line" id="archiveLine" aria-hidden="true"></div>
+        <div class="plinth-line" aria-hidden="true"></div>
         <button class="side-hit side-hit-left" type="button" data-direction="-1" aria-label="Previous shoe">PREVIOUS</button>
         <button class="side-hit side-hit-right" type="button" data-direction="1" aria-label="Next shoe">NEXT</button>
-        <div class="shoe-track" id="shoeTrack"></div>
+        <div class="shoe-track" id="shoeTrack" aria-label="Shoes on the line"></div>
       </div>
-      <p class="line-instruction">SCROLL OR TAP TO MOVE · SELECT CENTER TO EXAMINE</p>
+      <p class="active-name" id="activeName">THE FIRST FORM</p>
+      <p class="line-instruction">SCROLL OR TAP TO MOVE · SELECT CENTER TO INSPECT</p>
     </section>
 
     <section class="inspect-view" aria-label="Shoe inspection">
@@ -46,9 +39,9 @@
       </aside>
       <div class="inspect-object" id="inspectObject" aria-label="Selected shoe" role="img"></div>
       <div class="detail-marks" aria-label="Shoe details">
-        <button type="button" class="detail-mark active" data-detail="MATERIAL">MATERIAL</button>
-        <button type="button" class="detail-mark" data-detail="FORM">FORM</button>
-        <button type="button" class="detail-mark" data-detail="SOLE">SOLE</button>
+        <button type="button" class="detail-mark active" data-detail="material">MATERIAL</button>
+        <button type="button" class="detail-mark" data-detail="form">FORM</button>
+        <button type="button" class="detail-mark" data-detail="sole">SOLE</button>
       </div>
       <p class="detail-text" id="detailText">The surface carries grain, pressure, and use.</p>
       <aside class="inspect-copy inspect-right">
@@ -66,7 +59,7 @@
       </div>
     </section>
 
-    <section class="confirmation" aria-label="Purchase confirmation">
+    <section class="confirmation" aria-label="Claim confirmation">
       <div class="box-outline" aria-hidden="true"></div>
       <h2>ADDED TO YOUR COLLECTION</h2>
       <a id="checkoutLink" href="checkout.html">CHECKOUT</a>
